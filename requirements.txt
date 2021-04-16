@@ -1,2 +1,6 @@
 pandas
 xlsxwriter
+seaborn
+matplotlib
+statsmodels
+jupyter

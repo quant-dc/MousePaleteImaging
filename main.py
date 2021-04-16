@@ -3,6 +3,8 @@ import xml.etree.ElementTree as ET
 
 import pandas as pd
 
+data_folder = Path('./data/raw')
+
 point_pairing = (
     ('Ant shelf L', 'Post shelf L'),
     ('Ant shelf R', 'Post shelf R'),
@@ -28,8 +30,32 @@ def create_file_points(filename):
         print(f'I failed on this name: {filename}. Come on Cathy! Sort it out!!!')
         raise e
     data['File'] = filename.stem
+    data.loc[:, ['Info', 'Culture', 'Time']] = parse_filename(data['File'])
     data = data.set_index('File', append=True).reorder_levels([1,0])
     return data
+
+def parse_filename(filename: pd.Series):
+    mapping = {
+        'E12.5': 0.0,
+        'E13': 12.0,
+        'E13.5': 24.0,
+        'E14': 36.0,
+        'E14.5': 48.0,
+        'E15': 60.0,
+    }
+    result = (
+        filename
+            .str
+            .split(' ', expand=True)
+            .iloc[:, :3]
+            .rename(columns={
+            ix: name
+            for ix, name in enumerate(['Info', 'Culture', 'Time'])
+        })
+    )
+    result['Time'] = result['Time'].str.replace('[A-z]*', '', regex=True).astype(float)
+    result.loc[filename.str.contains('Fix', regex=False), 'Time'] = result['Info'].map(mapping).astype(float)
+    return result
 
 def measure_distances(data):
     return pd.DataFrame(
@@ -39,13 +65,13 @@ def measure_distances(data):
         index=data.index.levels[0]
     )
 
-data_folder = Path('./data')
+if __name__ == '__main__':
+    data = [create_file_points(file) for file in data_folder.glob('*.points')]
+    distances = pd.concat(map(measure_distances, data))
+    distances = pd.concat([distances, parse_filename(pd.Series(distances.index, index=distances.index))], axis=1)
+    data = pd.concat(data)
 
-data = [create_file_points(file) for file in data_folder.glob('*.points')]
-distances = pd.concat(map(measure_distances, data))
-data = pd.concat(data)
-
-writer = pd.ExcelWriter('results/data.xlsx')
-data.to_excel(writer, sheet_name='Points')
-distances.to_excel(writer, sheet_name='Distances')
-writer.save()
+    writer = pd.ExcelWriter('results/data.xlsx')
+    data.to_excel(writer, sheet_name='Points')
+    distances.to_excel(writer, sheet_name='Distances')
+    writer.save()
