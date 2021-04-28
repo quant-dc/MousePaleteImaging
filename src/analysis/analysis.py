@@ -8,7 +8,7 @@ import statsmodels.api as sm
 sns.set_style("whitegrid")
 sns.set_context('notebook')
 
-results_folder = Path(__file__).parents[1] / 'results'
+results_folder = Path(__file__).parents[2] / 'results'
 
 # %% Load Data
 
