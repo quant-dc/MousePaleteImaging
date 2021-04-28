@@ -18,16 +18,17 @@ data.columns = ['Culture', 'Age (days)', 'Percentage (%)']
 
 # %% Plot
 
-ax = sns.pointplot(
+ax = sns.lineplot(
     data=data,
     x='Age (days)',
     y='Percentage (%)',
     color='#f210ea',
+    err_style='bars',
 )
 ax.set_ylim(0, 100)
 ax.set_ylabel('Mediolateral Shelf Width \n(as a percentage of total width)')
 sns.despine(left=True)
-plt.subplots_adjust(top=.95)
 plt.title('Mediolateral Shelf Growth occurs in Culture', fontweight='bold')
-# plt.savefig(results_folder / 'Distances of POI in Cultured Samples over time.png', dpi=700)
-plt.show()
+plt.tight_layout()
+plt.savefig(results_folder / 'Mediolateral Shelf Growth occurs in Culture.png', dpi=700)
+# plt.show()
