@@ -15,6 +15,8 @@ point_pairing = (
     ('Ant shelf L', 'Post whis L'),
     ('Ant shelf R', 'Post whis R'),
     ('Post whis L', 'Post whis R'),
+    ('Med shelf L', 'Post whis L'),
+    ('Med shelf R', 'Post whis R'),
     ('Left', 'Right')
 )
 

@@ -20,8 +20,7 @@ data = (
         .reset_index()
 )
 
-cultured = data.loc[~data.Culture.str.contains('Fix', regex=False)].copy()
-cultured = cultured.loc[cultured.Info.str.contains('E12.5', regex=False), :]
+invivo = data.loc[~data.Culture.str.contains('Cul', regex=False)].copy()
 
 measurement_name_mapping = {
     'Dist(Ant shelf L, Post shelf L)': '1-3',
@@ -35,25 +34,33 @@ measurement_name_mapping = {
     'Dist(Post whis L, Post whis R)': '7-8',
     'Dist(Left, Right)': '11-12'
 }
-cultured['Measurement'] = cultured.Measurement.map(measurement_name_mapping)
+invivo['Measurement'] = invivo.Measurement.map(measurement_name_mapping)
+
+time_stage_mapping = {
+    'E12.5': '12.5',
+    'E13': '13.0',
+    'E13.5': '13.5',
+    'E14': '14.0',
+    'E14.5': '14.5',
+    'E15': '15.0',
+    }
 
 # %% Plot
 
-fig, ax = plt.subplots(figsize=(8,4.5))
+fig, ax = plt.subplots(figsize=(8, 4.5))
 sns.lineplot(
-    data=cultured,
-    x='Time',
+    data=invivo,
+    x='Info',
     y='Distance',
     hue='Measurement',
     err_style='bars',
-    ci=.95,
     ax=ax
 )
 plt.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0., title='Measurement')
-ax.set_xlabel('Time (hours)')
+ax.set_xlabel('Age (days)')
 ax.set_ylabel('Distance (mm)')
-plt.title('Maxillary Explant Dimension Changes in Culture', fontweight='bold')
+plt.title('Maxillary Growth In Vivo', fontweight='bold')
 sns.despine(left=True)
 plt.tight_layout()
-plt.savefig(results_folder / 'Maxillary Explant Dimension Changes in Culture', dpi=700)
+plt.savefig(results_folder / 'Maxillary Growth In Vivo', dpi=700)
 # plt.show()

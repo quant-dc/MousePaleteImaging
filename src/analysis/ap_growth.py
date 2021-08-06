@@ -21,7 +21,19 @@ data = (
         .to_frame(name='Distance')
         .reset_index()
 )
-data['Fixed'] = data.Culture.str.contains('Fix', regex=False)
+
+data['CultureType'] = np.where(
+    data.Culture.str.contains('CulIk', regex=False),
+    'Ikemoto',
+    'Normal'
+)
+
+data['Stage/Fixed'] = np.where(
+     (data.Culture.str.contains('Fix', regex=False)) & (data.CultureType.str.contains('Normal', regex=False)),
+     'In vivo',
+     data.Info.str.extract(r'(?P<capture>E[1-9\.]*)')['capture']
+ )
+
 cultured_mapping = {
     0: 12.5,
     17: 13,
@@ -31,34 +43,43 @@ cultured_mapping = {
     65: 15,
     72: 15.5
 }
-data.loc[~data.Fixed, 'Time'] = data.loc[~data.Fixed, 'Time'].map(cultured_mapping)
-data.loc[data.Fixed, 'Time'] = data.loc[data.Fixed, 'Info'].str.replace('E', '').astype(float)
-data['Fixed'] = np.where(data.Fixed, 'In vivo', 'E12.5 culture')
+
+not_fixed = data['Stage/Fixed'] != 'In vivo'
+data.loc[not_fixed, 'Time'] = data.loc[not_fixed, 'Time'].map(cultured_mapping)
+data.loc[not_fixed, 'Time'] += data.loc[not_fixed, 'Stage/Fixed'].str.replace('E', '').astype(float) - 12.5
+data.loc[~not_fixed, 'Time'] = data.loc[~not_fixed, 'Info'].str.replace('E', '').astype(float)
+
 data = (
     data
-        .groupby(['Info', 'Culture', 'Time', 'Fixed'])['Distance']
+        .groupby(['Info', 'Culture', 'Time', 'Stage/Fixed', 'CultureType'])['Distance']
         .mean()
         .to_frame()
         .reset_index()
 )
 
-data
-
 # %% Plot
 
 ax = sns.lineplot(
-    data=data,
+    data=(
+        data.loc[data['CultureType'] != 'Ikemoto', :]
+            .sort_values(
+                'Stage/Fixed',
+                key=lambda x: x.str.replace('In vivo', '0').str.replace('E', '').astype(float)
+            )
+    ),
     x='Time',
     y='Distance',
-    hue='Fixed',
+    hue='Stage/Fixed',
+    hue_order=['In vivo', 'E12.5', 'E13.5'],
     err_style='bars',
-    palette={'E12.5 culture': '#f210ea', 'In vivo': '#000054'}
+    palette={'E12.5': '#f210ea', 'E13.5': '#2AA61B', 'In vivo': '#000054'},
+    lw=3,
 )
-ax.set_xlabel('Age (days)')
-ax.set_ylabel('Shelf length (mm)')
-plt.title('Anteroposterior Shelf Growth Arrests in Culture', fontweight='bold')
-plt.legend(title=None)
+ax.set_xlabel('Embryonic Age (days)', fontsize=16)
+ax.set_ylabel('Shelf Length (mm)', fontsize=16)
+plt.tick_params(axis='x', labelsize=14)
+plt.tick_params(axis='y', labelsize=14)
+plt.legend(title=None, fontsize=16)
 sns.despine(left=True)
 plt.tight_layout()
-plt.savefig(results_folder / 'Anteroposterior Shelf Growth Arrests in Culture.png', dpi=700)
-# plt.show()
+plt.show()
